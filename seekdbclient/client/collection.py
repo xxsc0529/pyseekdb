@@ -1,18 +1,31 @@
 """
-Collection class - represents a collection and provides data operation interface
+Collection class - represents a collection and provides unified data operation interface
+
+Design Pattern:
+1. Collection itself contains no business logic
+2. All operations are delegated to the client that created it
+3. Different clients can have completely different underlying implementations
+4. User-facing interface is completely consistent
 """
 from typing import Any, List, Dict, Optional, Union
 
 
 class Collection:
     """
-    Collection class - encapsulates collection properties and data operation methods
+    Collection unified interface class
+    
+    Design Principles:
+    - Collection is a lightweight wrapper that only holds metadata
+    - All operations delegate to the client via self._client._collection_*() methods
+    - Different clients (OceanBase, Seekdb, Milvus, etc.) provide different implementations
+    - Users see identical interface regardless of which client created the collection
     """
     
     def __init__(
         self,
         client: Any,  # BaseClient instance
         name: str,
+        collection_id: Optional[str] = None,
         dimension: Optional[int] = None,
         **metadata
     ):
@@ -20,20 +33,29 @@ class Collection:
         Initialize collection object
         
         Args:
-            client: client instance
-            name: collection name
-            dimension: vector dimension
-            **metadata: other metadata
+            client: The client instance that created this collection
+            name: Collection name
+            collection_id: Collection unique identifier (some databases may need this)
+            dimension: Vector dimension
+            **metadata: Other metadata
         """
-        self._client = client
+        self._client = client  # Core: hold reference to the client
         self._name = name
+        self._id = collection_id
         self._dimension = dimension
         self._metadata = metadata
+    
+    # ==================== Properties ====================
     
     @property
     def name(self) -> str:
         """Collection name"""
         return self._name
+    
+    @property
+    def id(self) -> Optional[str]:
+        """Collection ID"""
+        return self._id
     
     @property
     def dimension(self) -> Optional[int]:
@@ -51,163 +73,361 @@ class Collection:
         return self._metadata
     
     def __repr__(self) -> str:
-        return f"Collection(name='{self._name}', dimension={self._dimension})"
+        return f"Collection(name='{self._name}', dimension={self._dimension}, client={self._client.mode})"
     
-    # ==================== Data Operations ====================
+    # ==================== DML Operations ====================
+    # All methods delegate to client's internal implementation
     
-    def add(self, data: Union[Dict, List[Dict]], **kwargs) -> None:
+    def add(
+        self,
+        ids: Union[str, List[str]],
+        vectors: Optional[Union[List[float], List[List[float]]]] = None,
+        metadatas: Optional[Union[Dict, List[Dict]]] = None,
+        documents: Optional[Union[str, List[str]]] = None,
+        **kwargs
+    ) -> None:
         """
         Add data to collection
         
         Args:
-            data: single data (dict) or multiple data (list of dicts)
-            **kwargs: other parameters
+            ids: Single ID or list of IDs
+            vectors: Single vector or list of vectors (optional if documents provided)
+            metadatas: Single metadata dict or list of metadata dicts (optional)
+            documents: Single document or list of documents (optional)
+            **kwargs: Additional parameters
+            
+        Examples:
+            # Add single item
+            collection.add(ids="1", vectors=[0.1, 0.2, 0.3], metadatas={"tag": "A"})
+            
+            # Add multiple items
+            collection.add(
+                ids=["1", "2", "3"],
+                vectors=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]],
+                metadatas=[{"tag": "A"}, {"tag": "B"}, {"tag": "C"}]
+            )
         """
-        # TODO: implement specific logic
-        pass
+        return self._client._collection_add(
+            collection_id=self._id,
+            collection_name=self._name,
+            ids=ids,
+            vectors=vectors,
+            metadatas=metadatas,
+            documents=documents,
+            **kwargs
+        )
     
-    def update(self, data: Dict, filter: Optional[str] = None, **kwargs) -> None:
+    def update(
+        self,
+        ids: Union[str, List[str]],
+        vectors: Optional[Union[List[float], List[List[float]]]] = None,
+        metadatas: Optional[Union[Dict, List[Dict]]] = None,
+        documents: Optional[Union[str, List[str]]] = None,
+        **kwargs
+    ) -> None:
         """
-        Update data in collection
+        Update existing data in collection
         
         Args:
-            data: data to update
-            filter: filter condition
-            **kwargs: other parameters
+            ids: Single ID or list of IDs to update
+            vectors: New vectors (optional)
+            metadatas: New metadata (optional)
+            documents: New documents (optional)
+            **kwargs: Additional parameters
+            
+        Note:
+            IDs must exist, otherwise an error will be raised
+            
+        Examples:
+            # Update single item
+            collection.update(ids="1", metadatas={"tag": "B"})
+            
+            # Update multiple items
+            collection.update(
+                ids=["1", "2"],
+                vectors=[[0.9, 0.8], [0.7, 0.6]]
+            )
         """
-        # TODO: implement specific logic
-        pass
+        return self._client._collection_update(
+            collection_id=self._id,
+            collection_name=self._name,
+            ids=ids,
+            vectors=vectors,
+            metadatas=metadatas,
+            documents=documents,
+            **kwargs
+        )
+    
+    def upsert(
+        self,
+        ids: Union[str, List[str]],
+        vectors: Optional[Union[List[float], List[List[float]]]] = None,
+        metadatas: Optional[Union[Dict, List[Dict]]] = None,
+        documents: Optional[Union[str, List[str]]] = None,
+        **kwargs
+    ) -> None:
+        """
+        Insert or update data in collection
+        
+        Args:
+            ids: Single ID or list of IDs
+            vectors: Vectors (optional if documents provided)
+            metadatas: Metadata (optional)
+            documents: Documents (optional)
+            **kwargs: Additional parameters
+            
+        Note:
+            If ID exists, update it; otherwise, insert new data
+            
+        Examples:
+            # Upsert single item
+            collection.upsert(ids="1", vectors=[0.1, 0.2], metadatas={"tag": "A"})
+            
+            # Upsert multiple items
+            collection.upsert(
+                ids=["1", "2", "3"],
+                vectors=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]
+            )
+        """
+        return self._client._collection_upsert(
+            collection_id=self._id,
+            collection_name=self._name,
+            ids=ids,
+            vectors=vectors,
+            metadatas=metadatas,
+            documents=documents,
+            **kwargs
+        )
     
     def delete(
         self,
-        ids: Optional[List[Union[str, int]]] = None,
-        filter: Optional[str] = None,
+        ids: Optional[Union[str, List[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+        where_document: Optional[Dict[str, Any]] = None,
         **kwargs
     ) -> None:
         """
         Delete data from collection
         
         Args:
-            ids: list of data IDs to delete
-            filter: filter condition
-            **kwargs: other parameters
-        """
-        # TODO: implement specific logic
-        pass
-    
-    # ==================== Data Query ====================
-    
-    def search(
-        self,
-        query_vector: Union[List[float], Dict],
-        top_k: int = 10,
-        output_fields: Optional[List[str]] = None,
-        **kwargs
-    ) -> List[Dict]:
-        """
-        Vector similarity search
-        
-        Args:
-            query_vector: query vector
-            top_k: number of results to return
-            output_fields: fields to return
-            **kwargs: other parameters
+            ids: Single ID or list of IDs to delete (optional)
+            where: Filter condition on metadata (optional)
+            where_document: Filter condition on documents (optional)
+            **kwargs: Additional parameters
             
-        Returns:
-            List of query results
-        """
-        # TODO: implement specific logic
-        return []
-    
-    def get_by_id(
-        self,
-        ids: List[Union[str, int]],
-        output_fields: Optional[List[str]] = None,
-        **kwargs
-    ) -> List[Dict]:
-        """
-        Query data by ID
-        
-        Args:
-            ids: list of data IDs
-            output_fields: fields to return
-            **kwargs: other parameters
+        Note:
+            At least one of ids, where, or where_document must be provided
             
-        Returns:
-            List of query results
+        Examples:
+            # Delete by IDs
+            collection.delete(ids=["1", "2", "3"])
+            
+            # Delete by metadata filter
+            collection.delete(where={"tag": "A"})
+            
+            # Delete by document filter
+            collection.delete(where_document={"$contains": "keyword"})
         """
-        # TODO: implement specific logic
-        return []
+        return self._client._collection_delete(
+            collection_id=self._id,
+            collection_name=self._name,
+            ids=ids,
+            where=where,
+            where_document=where_document,
+            **kwargs
+        )
+    
+    # ==================== DQL Operations ====================
     
     def query(
         self,
-        filter: Optional[str] = None,
-        output_fields: Optional[List[str]] = None,
-        limit: Optional[int] = None,
+        query_vector: Optional[Union[List[float], List[List[float]]]] = None,
+        query_text: Optional[Union[str, List[str]]] = None,
+        n_results: int = 10,
+        where: Optional[Dict[str, Any]] = None,
+        where_document: Optional[Dict[str, Any]] = None,
+        include: Optional[List[str]] = None,
         **kwargs
-    ) -> List[Dict]:
+    ) -> Dict[str, Any]:
         """
-        Query data by filter condition
+        Query collection by vector similarity
         
         Args:
-            filter: filter condition
-            output_fields: fields to return
-            limit: limit on number of results
-            **kwargs: other parameters
+            query_vector: Query vector(s) (optional if query_text provided)
+            query_text: Query text(s) to be embedded (optional if query_vector provided)
+            n_results: Number of results to return (default: 10)
+            where: Filter condition on metadata (optional)
+            where_document: Filter condition on documents (optional)
+            include: Fields to include in results, e.g., ["metadatas", "documents", "distances"] (optional)
+            **kwargs: Additional parameters
             
         Returns:
-            List of query results
+            Query results dictionary containing ids, distances, metadatas, documents, etc.
+            
+        Examples:
+            # Query by vector
+            results = collection.query(
+                query_vector=[0.1, 0.2, 0.3],
+                n_results=5
+            )
+            
+            # Query with filters
+            results = collection.query(
+                query_vector=[0.1, 0.2, 0.3],
+                where={"tag": "A"},
+                include=["metadatas", "distances"]
+            )
         """
-        # TODO: implement specific logic
-        return []
+        return self._client._collection_query(
+            collection_id=self._id,
+            collection_name=self._name,
+            query_vector=query_vector,
+            query_text=query_text,
+            n_results=n_results,
+            where=where,
+            where_document=where_document,
+            include=include,
+            **kwargs
+        )
+    
+    def get(
+        self,
+        ids: Optional[Union[str, List[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+        where_document: Optional[Dict[str, Any]] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        include: Optional[List[str]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Get data from collection by IDs or filters
+        
+        Args:
+            ids: Single ID or list of IDs to retrieve (optional)
+            where: Filter condition on metadata (optional)
+            where_document: Filter condition on documents (optional)
+            limit: Maximum number of results to return (optional)
+            offset: Number of results to skip (optional)
+            include: Fields to include in results, e.g., ["metadatas", "documents", "embeddings"] (optional)
+            **kwargs: Additional parameters
+            
+        Returns:
+            Results dictionary containing ids, metadatas, documents, embeddings, etc.
+            
+        Note:
+            If no parameters provided, returns all data (up to limit)
+            
+        Examples:
+            # Get by IDs
+            results = collection.get(ids=["1", "2", "3"])
+            
+            # Get by filter
+            results = collection.get(
+                where={"tag": "A"},
+                limit=10
+            )
+            
+            # Get all data
+            results = collection.get(limit=100)
+        """
+        return self._client._collection_get(
+            collection_id=self._id,
+            collection_name=self._name,
+            ids=ids,
+            where=where,
+            where_document=where_document,
+            limit=limit,
+            offset=offset,
+            include=include,
+            **kwargs
+        )
     
     def hybrid_search(
         self,
-        query_vector: Union[List[float], Dict],
-        filter: Optional[str] = None,
-        top_k: int = 10,
-        output_fields: Optional[List[str]] = None,
+        query_vector: Optional[Union[List[float], List[List[float]]]] = None,
+        query_text: Optional[Union[str, List[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+        where_document: Optional[Dict[str, Any]] = None,
+        n_results: int = 10,
+        include: Optional[List[str]] = None,
         **kwargs
-    ) -> List[Dict]:
+    ) -> Dict[str, Any]:
         """
-        Hybrid search (vector + filter)
+        Hybrid search combining vector similarity and filters
         
         Args:
-            query_vector: query vector
-            filter: filter condition
-            top_k: number of results to return
-            output_fields: fields to return
-            **kwargs: other parameters
+            query_vector: Query vector(s) (optional if query_text provided)
+            query_text: Query text(s) to be embedded (optional if query_vector provided)
+            where: Filter condition on metadata (optional)
+            where_document: Filter condition on documents (optional)
+            n_results: Number of results to return (default: 10)
+            include: Fields to include in results (optional)
+            **kwargs: Additional parameters
             
         Returns:
-            List of query results
+            Search results dictionary containing ids, distances, metadatas, documents, etc.
+            
+        Note:
+            This method combines vector similarity search with metadata/document filtering
+            
+        Examples:
+            # Hybrid search with metadata filter
+            results = collection.hybrid_search(
+                query_vector=[0.1, 0.2, 0.3],
+                where={"category": "science", "year": {"$gte": 2020}},
+                n_results=10
+            )
+            
+            # Hybrid search with document filter
+            results = collection.hybrid_search(
+                query_vector=[0.1, 0.2, 0.3],
+                where_document={"$contains": "machine learning"},
+                include=["metadatas", "documents", "distances"]
+            )
         """
-        # TODO: implement specific logic
-        return []
+        return self._client._collection_hybrid_search(
+            collection_id=self._id,
+            collection_name=self._name,
+            query_vector=query_vector,
+            query_text=query_text,
+            where=where,
+            where_document=where_document,
+            n_results=n_results,
+            include=include,
+            **kwargs
+        )
     
     # ==================== Collection Info ====================
+    
+    def count(self) -> int:
+        """
+        Get the number of items in collection
+        
+        Returns:
+            Item count
+            
+        Examples:
+            count = collection.count()
+            print(f"Collection has {count} items")
+        """
+        return self._client._collection_count(
+            collection_id=self._id,
+            collection_name=self._name
+        )
     
     def describe(self) -> Dict[str, Any]:
         """
         Get detailed collection information
         
         Returns:
-            Collection information dict
+            Collection information dictionary
+            
+        Examples:
+            info = collection.describe()
+            print(f"Name: {info['name']}, Dimension: {info['dimension']}")
         """
-        # TODO: implement specific logic
-        return {
-            "name": self._name,
-            "dimension": self._dimension,
-            **self._metadata
-        }
-    
-    def count(self) -> int:
-        """
-        Get number of data in collection
-        
-        Returns:
-            Data count
-        """
-        # TODO: implement specific logic
-        return 0
-
+        return self._client._collection_describe(
+            collection_id=self._id,
+            collection_name=self._name
+        )

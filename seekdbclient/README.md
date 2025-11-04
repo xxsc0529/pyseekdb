@@ -124,7 +124,6 @@ export OB_PASSWORD=
 ```
 
 ## Architecture
-Following chromadb's design pattern:
 - **ClientAPI**: Collection operations interface
 - **AdminAPI**: Database operations interface
 - **ServerAPI (BaseClient)**: Implements both interfaces

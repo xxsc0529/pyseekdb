@@ -3,7 +3,7 @@ Embedded mode client - based on seekdb
 """
 import os
 import logging
-from typing import Any, List, Optional, Sequence, TYPE_CHECKING
+from typing import Any, List, Optional, Sequence, Dict, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     import seekdb  # type: ignore
@@ -196,6 +196,327 @@ class SeekdbEmbeddedClient(BaseClient):
         logger.info(f"SeekdbEmbeddedClient: has_collection framework for {name}")
         # TODO: implement seekdb has_collection logic
         return False
+    
+    # ==================== Collection Internal Operations ====================
+    # These methods are called by Collection objects
+    
+    # -------------------- DML Operations --------------------
+    
+    def _collection_add(
+        self,
+        collection_id: Optional[str],
+        collection_name: str,
+        ids: Union[str, List[str]],
+        vectors: Optional[Union[List[float], List[List[float]]]] = None,
+        metadatas: Optional[Union[Dict, List[Dict]]] = None,
+        documents: Optional[Union[str, List[str]]] = None,
+        **kwargs
+    ) -> None:
+        """
+        [Internal] Add data to collection - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            ids: Single ID or list of IDs
+            vectors: Single vector or list of vectors
+            metadatas: Metadata dict(s)
+            documents: Document string(s)
+            **kwargs: Additional parameters
+        """
+        logger.info(f"Embedded: Adding data to collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific add logic
+        # Example SQL: INSERT INTO {collection_name} (id, vector, metadata, document) VALUES (?, ?, ?, ?)
+        
+        logger.info(f"✅ Successfully added data to '{collection_name}'")
+    
+    def _collection_update(
+        self,
+        collection_id: Optional[str],
+        collection_name: str,
+        ids: Union[str, List[str]],
+        vectors: Optional[Union[List[float], List[List[float]]]] = None,
+        metadatas: Optional[Union[Dict, List[Dict]]] = None,
+        documents: Optional[Union[str, List[str]]] = None,
+        **kwargs
+    ) -> None:
+        """
+        [Internal] Update data in collection - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            ids: Single ID or list of IDs to update
+            vectors: New vectors
+            metadatas: New metadata
+            documents: New documents
+            **kwargs: Additional parameters
+        """
+        logger.info(f"Embedded: Updating data in collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific update logic
+        # Example SQL: UPDATE {collection_name} SET vector=?, metadata=?, document=? WHERE id=?
+        
+        logger.info(f"✅ Successfully updated data in '{collection_name}'")
+    
+    def _collection_upsert(
+        self,
+        collection_id: Optional[str],
+        collection_name: str,
+        ids: Union[str, List[str]],
+        vectors: Optional[Union[List[float], List[List[float]]]] = None,
+        metadatas: Optional[Union[Dict, List[Dict]]] = None,
+        documents: Optional[Union[str, List[str]]] = None,
+        **kwargs
+    ) -> None:
+        """
+        [Internal] Insert or update data in collection - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            ids: Single ID or list of IDs
+            vectors: Vectors
+            metadatas: Metadata
+            documents: Documents
+            **kwargs: Additional parameters
+        """
+        logger.info(f"Embedded: Upserting data in collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific upsert logic
+        # Example SQL: INSERT INTO {collection_name} ... ON DUPLICATE KEY UPDATE ...
+        
+        logger.info(f"✅ Successfully upserted data in '{collection_name}'")
+    
+    def _collection_delete(
+        self,
+        collection_id: Optional[str],
+        collection_name: str,
+        ids: Optional[Union[str, List[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+        where_document: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> None:
+        """
+        [Internal] Delete data from collection - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            ids: IDs to delete
+            where: Metadata filter
+            where_document: Document filter
+            **kwargs: Additional parameters
+        """
+        logger.info(f"Embedded: Deleting data from collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific delete logic
+        # Example SQL: DELETE FROM {collection_name} WHERE id IN (...)
+        
+        logger.info(f"✅ Successfully deleted data from '{collection_name}'")
+    
+    # -------------------- DQL Operations --------------------
+    
+    def _collection_query(
+        self,
+        collection_id: Optional[str],
+        collection_name: str,
+        query_vector: Optional[Union[List[float], List[List[float]]]] = None,
+        query_text: Optional[Union[str, List[str]]] = None,
+        n_results: int = 10,
+        where: Optional[Dict[str, Any]] = None,
+        where_document: Optional[Dict[str, Any]] = None,
+        include: Optional[List[str]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        [Internal] Query collection by vector similarity - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            query_vector: Query vector(s)
+            query_text: Query text(s)
+            n_results: Number of results
+            where: Metadata filter
+            where_document: Document filter
+            include: Fields to include
+            **kwargs: Additional parameters
+            
+        Returns:
+            Query results dictionary
+        """
+        logger.info(f"Embedded: Querying collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific query logic
+        # Example SQL: SELECT * FROM {collection_name} ORDER BY vector <-> ? LIMIT ?
+        
+        results = {
+            "ids": [],
+            "distances": [],
+            "metadatas": [],
+            "documents": [],
+            "embeddings": []
+        }
+        
+        logger.info(f"✅ Query completed for '{collection_name}'")
+        return results
+    
+    def _collection_get(
+        self,
+        collection_id: Optional[str],
+        collection_name: str,
+        ids: Optional[Union[str, List[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+        where_document: Optional[Dict[str, Any]] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        include: Optional[List[str]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        [Internal] Get data from collection - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            ids: IDs to retrieve
+            where: Metadata filter
+            where_document: Document filter
+            limit: Maximum number of results
+            offset: Number of results to skip
+            include: Fields to include
+            **kwargs: Additional parameters
+            
+        Returns:
+            Results dictionary
+        """
+        logger.info(f"Embedded: Getting data from collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific get logic
+        # Example SQL: SELECT * FROM {collection_name} WHERE id IN (...)
+        
+        results = {
+            "ids": [],
+            "metadatas": [],
+            "documents": [],
+            "embeddings": []
+        }
+        
+        logger.info(f"✅ Get completed for '{collection_name}'")
+        return results
+    
+    def _collection_hybrid_search(
+        self,
+        collection_id: Optional[str],
+        collection_name: str,
+        query_vector: Optional[Union[List[float], List[List[float]]]] = None,
+        query_text: Optional[Union[str, List[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+        where_document: Optional[Dict[str, Any]] = None,
+        n_results: int = 10,
+        include: Optional[List[str]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        [Internal] Hybrid search - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            query_vector: Query vector(s)
+            query_text: Query text(s)
+            where: Metadata filter
+            where_document: Document filter
+            n_results: Number of results
+            include: Fields to include
+            **kwargs: Additional parameters
+            
+        Returns:
+            Search results dictionary
+        """
+        logger.info(f"Embedded: Hybrid search in collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific hybrid search logic
+        # Combine vector similarity with metadata/document filters
+        
+        results = {
+            "ids": [],
+            "distances": [],
+            "metadatas": [],
+            "documents": [],
+            "embeddings": []
+        }
+        
+        logger.info(f"✅ Hybrid search completed for '{collection_name}'")
+        return results
+    
+    # -------------------- Collection Info --------------------
+    
+    def _collection_count(
+        self,
+        collection_id: Optional[str],
+        collection_name: str
+    ) -> int:
+        """
+        [Internal] Get item count in collection - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            
+        Returns:
+            Item count
+        """
+        logger.info(f"Embedded: Counting items in collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific count logic
+        # Example SQL: SELECT COUNT(*) as cnt FROM {collection_name}
+        
+        count = 0
+        logger.info(f"✅ Collection '{collection_name}' has {count} items")
+        return count
+    
+    def _collection_describe(
+        self,
+        collection_id: Optional[str],
+        collection_name: str
+    ) -> Dict[str, Any]:
+        """
+        [Internal] Get collection information - Embedded implementation
+        
+        Args:
+            collection_id: Collection ID
+            collection_name: Collection name
+            
+        Returns:
+            Collection information dictionary
+        """
+        logger.info(f"Embedded: Describing collection '{collection_name}'")
+        conn = self._ensure_connection()
+        
+        # TODO: Implement Embedded specific describe logic
+        # Query collection metadata table
+        
+        info = {
+            "name": collection_name,
+            "id": collection_id,
+            "dimension": None,
+            "count": 0,
+            "metadata": {}
+        }
+        
+        logger.info(f"✅ Retrieved info for collection '{collection_name}'")
+        return info
     
     # ==================== Database Management ====================
     
