@@ -62,7 +62,7 @@ class TestClientCreation:
         assert collection.dimension == test_dimension
         
         # Verify table was created by checking if it exists
-        table_name = f"c$v1{test_collection_name}"
+        table_name = f"c$v1${test_collection_name}"
         try:
             # Try to describe table structure to verify it exists
             table_info = client._server.execute(f"DESCRIBE `{table_name}`")

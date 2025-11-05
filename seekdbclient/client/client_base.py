@@ -12,9 +12,9 @@ from .admin_client import AdminAPI, DEFAULT_TENANT
 from .query_result import QueryResult
 from .filters import FilterBuilder
 
-if TYPE_CHECKING:
-    from .collection import Collection
-    from .database import Database
+from .collection import Collection
+
+from .database import Database
 
 logger = logging.getLogger(__name__)
 
@@ -95,9 +95,6 @@ class BaseClient(BaseConnection, AdminAPI):
         if dimension is None:
             raise ValueError("dimension parameter is required for creating a collection")
         
-        # Import here to avoid circular import
-        from .collection import Collection
-        
         # Construct table name: c$v1${name}
         table_name = f"c$v1${name}"
         
@@ -117,7 +114,7 @@ class BaseClient(BaseConnection, AdminAPI):
         # Create and return Collection object
         return Collection(client=self, name=name, dimension=dimension, **kwargs)
     
-    def get_collection(self, name: str) -> Collection:
+    def get_collection(self, name: str) -> "Collection":
         """
         Get a collection object (user-facing API)
         
@@ -131,7 +128,7 @@ class BaseClient(BaseConnection, AdminAPI):
             ValueError: If collection does not exist
         """
         # Construct table name: c$v1${name}
-        table_name = f"c$v1{name}"
+        table_name = f"c$v1${name}"
         
         # Check if table exists by describing it
         try:
@@ -179,7 +176,7 @@ class BaseClient(BaseConnection, AdminAPI):
             ValueError: If collection does not exist
         """
         # Construct table name: c$v1${name}
-        table_name = f"c$v1{name}"
+        table_name = f"c$v1${name}"
         
         # Check if table exists first
         if not self.has_collection(name):
@@ -188,7 +185,7 @@ class BaseClient(BaseConnection, AdminAPI):
         # Execute DROP TABLE SQL
         self.execute(f"DROP TABLE IF EXISTS `{table_name}`")
     
-    def list_collections(self) -> List[Collection]:
+    def list_collections(self) -> List["Collection"]:
         """
         List all collections (user-facing API)
         
@@ -198,7 +195,7 @@ class BaseClient(BaseConnection, AdminAPI):
         # List all tables that start with 'c$v1'
         # Use SHOW TABLES LIKE 'c$v1%' to filter collection tables
         try:
-            tables = self.execute("SHOW TABLES LIKE 'c$v1%'")
+            tables = self.execute("SHOW TABLES LIKE 'c$v1$%'")
         except Exception:
             # Fallback: try to query information_schema
             try:
@@ -208,7 +205,7 @@ class BaseClient(BaseConnection, AdminAPI):
                     db_name = db_result[0][0] if isinstance(db_result[0], (tuple, list)) else db_result[0].get('DATABASE()', '')
                     tables = self.execute(
                         f"SELECT TABLE_NAME FROM information_schema.TABLES "
-                        f"WHERE TABLE_SCHEMA = '{db_name}' AND TABLE_NAME LIKE 'c$v1%'"
+                        f"WHERE TABLE_SCHEMA = '{db_name}' AND TABLE_NAME LIKE 'c$v1$%'"
                     )
                 else:
                     return []
@@ -227,9 +224,9 @@ class BaseClient(BaseConnection, AdminAPI):
             else:
                 table_name = str(row)
             
-            # Extract collection name from table name (remove 'c$v1' prefix)
-            if table_name.startswith('c$v1'):
-                collection_name = table_name[4:]  # Remove 'c$v1' prefix
+            # Extract collection name from table name (remove 'c$v1$' prefix)
+            if table_name.startswith('c$v1$'):
+                collection_name = table_name[5:]  # Remove 'c$v1$' prefix
                 
                 # Get collection with dimension
                 try:
@@ -252,7 +249,7 @@ class BaseClient(BaseConnection, AdminAPI):
             True if exists, False otherwise
         """
         # Construct table name: c$v1${name}
-        table_name = f"c$v1{name}"
+        table_name = f"c$v1${name}"
         
         # Check if table exists
         try:
@@ -268,7 +265,7 @@ class BaseClient(BaseConnection, AdminAPI):
         name: str,
         dimension: Optional[int] = None,
         **kwargs
-    ) -> Collection:
+    ) -> "Collection":
         """
         Get an existing collection or create it if it doesn't exist (user-facing API)
         
