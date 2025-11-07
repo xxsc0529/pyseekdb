@@ -7,6 +7,7 @@ import sys
 import os
 import time
 import json
+import uuid
 from pathlib import Path
 
 # Add project path
@@ -40,47 +41,38 @@ OB_PASSWORD = os.environ.get('OB_PASSWORD', '')
 class TestCollectionQuery:
     """Test collection.query() interface for all three modes"""
     
-    def _create_test_collection(self, client, collection_name: str, dimension: int = 3):
-        """Helper method to create a test collection"""
-        table_name = f"c$v1${collection_name}"
-        sql = f"""CREATE TABLE IF NOT EXISTS `{table_name}` (
-            _id bigint PRIMARY KEY NOT NULL AUTO_INCREMENT,
-            document string,
-            embedding vector({dimension}),
-            metadata json,
-            FULLTEXT INDEX idx1(document),
-            VECTOR INDEX idx2 (embedding) with(distance=l2, type=hnsw, lib=vsag)
-        );"""
-        client._server.execute(sql)
-        return seekdbclient.Collection(client=client._server, name=collection_name, dimension=dimension)
-    
     def _insert_test_data(self, client, collection_name: str):
-        """Helper method to insert test data"""
+        """Helper method to insert test data using direct SQL"""
         table_name = f"c$v1${collection_name}"
         
         # Insert test data with vectors, documents, and metadata
         test_data = [
             {
+                "_id": str(uuid.uuid4()),
                 "document": "This is a test document about machine learning",
                 "embedding": [1.0, 2.0, 3.0],
                 "metadata": {"category": "AI", "score": 95, "tag": "ml"}
             },
             {
+                "_id": str(uuid.uuid4()),
                 "document": "Python programming tutorial for beginners",
                 "embedding": [2.0, 3.0, 4.0],
                 "metadata": {"category": "Programming", "score": 88, "tag": "python"}
             },
             {
+                "_id": str(uuid.uuid4()),
                 "document": "Advanced machine learning algorithms",
                 "embedding": [1.1, 2.1, 3.1],
                 "metadata": {"category": "AI", "score": 92, "tag": "ml"}
             },
             {
+                "_id": str(uuid.uuid4()),
                 "document": "Data science with Python",
                 "embedding": [2.1, 3.1, 4.1],
                 "metadata": {"category": "Data Science", "score": 90, "tag": "python"}
             },
             {
+                "_id": str(uuid.uuid4()),
                 "document": "Introduction to neural networks",
                 "embedding": [1.2, 2.2, 3.2],
                 "metadata": {"category": "AI", "score": 85, "tag": "neural"}
@@ -88,6 +80,8 @@ class TestCollectionQuery:
         ]
         
         for data in test_data:
+            # Generate UUID for _id (convert to hex string for varbinary)
+            record_id = data["_id"].replace("-", "")  # Remove dashes to get hex string
             # Convert vector to string format: [1.0,2.0,3.0]
             vector_str = "[" + ",".join(map(str, data["embedding"])) + "]"
             # Convert metadata to JSON string
@@ -95,18 +89,9 @@ class TestCollectionQuery:
             # Escape single quotes in document
             document_str = data["document"].replace("'", "\\'")
             
-            sql = f"""INSERT INTO `{table_name}` (document, embedding, metadata) 
-                     VALUES ('{document_str}', '{vector_str}', '{metadata_str}')"""
+            sql = f"""INSERT INTO `{table_name}` (_id, document, embedding, metadata) 
+                     VALUES (UNHEX('{record_id}'), '{document_str}', '{vector_str}', '{metadata_str}')"""
             client._server.execute(sql)
-    
-    def _cleanup_collection(self, client, collection_name: str):
-        """Helper method to cleanup test collection"""
-        table_name = f"c$v1${collection_name}"
-        try:
-            client._server.execute(f"DROP TABLE IF EXISTS `{table_name}`")
-            print(f"   Cleaned up test table: {table_name}")
-        except Exception as cleanup_error:
-            print(f"   Warning: Failed to cleanup test table: {cleanup_error}")
     
     def test_embedded_collection_query(self):
         """Test collection.query() with embedded client"""
@@ -134,7 +119,7 @@ class TestCollectionQuery:
         
         # Create test collection
         collection_name = f"test_query_{int(time.time())}"
-        collection = self._create_test_collection(client, collection_name, dimension=3)
+        collection = client.create_collection(name=collection_name, dimension=3)
         
         try:
             # Insert test data
@@ -185,7 +170,11 @@ class TestCollectionQuery:
             
         finally:
             # Cleanup
-            self._cleanup_collection(client, collection_name)
+            try:
+                client.delete_collection(name=collection_name)
+                print(f"   Cleaned up collection: {collection_name}")
+            except Exception as cleanup_error:
+                print(f"   Warning: Failed to cleanup collection: {cleanup_error}")
     
     def test_server_collection_query(self):
         """Test collection.query() with server client"""
@@ -211,7 +200,7 @@ class TestCollectionQuery:
         
         # Create test collection
         collection_name = f"test_query_{int(time.time())}"
-        collection = self._create_test_collection(client, collection_name, dimension=3)
+        collection = client.create_collection(name=collection_name, dimension=3)
         
         try:
             # Insert test data
@@ -260,7 +249,11 @@ class TestCollectionQuery:
             
         finally:
             # Cleanup
-            self._cleanup_collection(client, collection_name)
+            try:
+                client.delete_collection(name=collection_name)
+                print(f"   Cleaned up collection: {collection_name}")
+            except Exception as cleanup_error:
+                print(f"   Warning: Failed to cleanup collection: {cleanup_error}")
     
     def test_oceanbase_collection_query(self):
         """Test collection.query() with OceanBase client"""
@@ -287,7 +280,7 @@ class TestCollectionQuery:
         
         # Create test collection
         collection_name = f"test_query_{int(time.time())}"
-        collection = self._create_test_collection(client, collection_name, dimension=3)
+        collection = client.create_collection(name=collection_name, dimension=3)
         
         try:
             # Insert test data
@@ -344,7 +337,11 @@ class TestCollectionQuery:
             
         finally:
             # Cleanup
-            self._cleanup_collection(client, collection_name)
+            try:
+                client.delete_collection(name=collection_name)
+                print(f"   Cleaned up collection: {collection_name}")
+            except Exception as cleanup_error:
+                print(f"   Warning: Failed to cleanup collection: {cleanup_error}")
 
 
 if __name__ == "__main__":

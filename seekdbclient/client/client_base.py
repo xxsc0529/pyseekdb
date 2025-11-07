@@ -101,7 +101,7 @@ class BaseClient(BaseConnection, AdminAPI):
         
         # Construct CREATE TABLE SQL statement
         sql = f"""CREATE TABLE `{table_name}` (
-            _id bigint PRIMARY KEY NOT NULL AUTO_INCREMENT,
+            _id varbinary(512) PRIMARY KEY NOT NULL,
             document string,
             embedding vector({dimension}),
             metadata json,
@@ -577,9 +577,42 @@ class BaseClient(BaseConnection, AdminAPI):
         
         # Add ids filter if provided
         if id_list:
-            placeholders = ",".join(["%s"] * len(id_list))
-            where_clauses.append(f"_id IN ({placeholders})")
-            params.extend(id_list)
+            # Process IDs for varbinary(512) _id field
+            # Since _id is varbinary(512), we need to convert IDs to binary format using UNHEX
+            # Support formats:
+            # 1. UUID format: "550e8400-e29b-41d4-a716-446655440000" (36 chars with dashes)
+            # 2. Hex string: "550e8400e29b41d4a716446655440000" (32 chars, no dashes)
+            # 3. Other formats: treat as hex if valid, otherwise raise error
+            processed_ids = []
+            for id_val in id_list:
+                if not isinstance(id_val, str):
+                    # Convert non-string to string first
+                    id_val = str(id_val)
+                
+                # Check if it's a UUID format (contains dashes, 36 chars)
+                if '-' in id_val and len(id_val) == 36:
+                    # Convert UUID to hex string (remove dashes) for varbinary storage
+                    hex_id = id_val.replace("-", "")
+                    # Validate hex string (should be 32 chars, all hex)
+                    if len(hex_id) == 32 and all(c in '0123456789abcdefABCDEF' for c in hex_id):
+                        processed_ids.append(f"UNHEX('{hex_id}')")
+                    else:
+                        raise ValueError(f"Invalid UUID format: {id_val}")
+                else:
+                    # Check if it's a valid hex string for varbinary
+                    # For _id field, we expect either UUID format or valid hex string
+                    if len(id_val) > 0 and len(id_val) % 2 == 0 and all(c in '0123456789abcdefABCDEF' for c in id_val):
+                        # Valid hex string, use UNHEX
+                        processed_ids.append(f"UNHEX('{id_val}')")
+                    else:
+                        # Not a valid hex string for varbinary _id field
+                        raise ValueError(
+                            f"Invalid ID format for varbinary _id field: '{id_val}'. "
+                            f"Expected UUID format (e.g., '550e8400-e29b-41d4-a716-446655440000') "
+                            f"or hex string (e.g., '550e8400e29b41d4a716446655440000')"
+                        )
+            
+            where_clauses.append(f"_id IN ({','.join(processed_ids)})")
         
         # Add metadata filter
         if where:
