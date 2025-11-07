@@ -21,7 +21,7 @@ SEEKDB_PATH = os.environ.get('SEEKDB_PATH', os.path.join(project_root, "seekdb_s
 SEEKDB_DATABASE = os.environ.get('SEEKDB_DATABASE', 'test')
 
 # Server mode
-SERVER_HOST = os.environ.get('SERVER_HOST', '11.161.205.15')
+SERVER_HOST = os.environ.get('SERVER_HOST', 'localhost')
 SERVER_PORT = int(os.environ.get('SERVER_PORT', '2881'))
 SERVER_DATABASE = os.environ.get('SERVER_DATABASE', 'test')
 SERVER_USER = os.environ.get('SERVER_USER', 'root')
@@ -72,13 +72,22 @@ class TestClientCreation:
             # Verify table has expected columns
             # Handle both dict (server client) and tuple (embedded client) formats
             column_names = []
+            column_types = {}  # Store column types for verification
             for row in table_info:
                 if isinstance(row, dict):
                     # Server client returns dict with 'Field' or 'field' key
-                    column_names.append(row.get('Field', row.get('field', '')))
+                    field_name = row.get('Field', row.get('field', ''))
+                    field_type = row.get('Type', row.get('type', ''))
+                    column_names.append(field_name)
+                    if field_name:
+                        column_types[field_name] = str(field_type).lower()
                 elif isinstance(row, (tuple, list)):
-                    # Embedded client returns tuple, first element is field name
-                    column_names.append(row[0] if len(row) > 0 else '')
+                    # Embedded client returns tuple, first element is field name, second is type
+                    field_name = row[0] if len(row) > 0 else ''
+                    field_type = row[1] if len(row) > 1 else ''
+                    column_names.append(field_name)
+                    if field_name:
+                        column_types[field_name] = str(field_type).lower()
                 else:
                     # Fallback: try to convert to string
                     column_names.append(str(row))
@@ -87,6 +96,12 @@ class TestClientCreation:
             assert 'document' in column_names
             assert 'embedding' in column_names
             assert 'metadata' in column_names
+            
+            # Verify _id column type is varbinary (for varbinary(512) type)
+            if '_id' in column_types:
+                id_type = column_types['_id']
+                # Check if it's varbinary type (could be 'varbinary(512)' or similar)
+                assert 'varbinary' in id_type, f"Expected _id to be varbinary type, but got: {id_type}"
             
             print(f"\n✅ Collection '{test_collection_name}' created successfully")
             print(f"   Table name: {table_name}")

@@ -7,6 +7,7 @@ import sys
 import os
 import time
 import json
+import uuid
 from pathlib import Path
 
 # Add project path
@@ -40,20 +41,6 @@ OB_PASSWORD = os.environ.get('OB_PASSWORD', '')
 class TestCollectionGet:
     """Test collection.get() interface for all three modes"""
     
-    def _create_test_collection(self, client, collection_name: str, dimension: int = 3):
-        """Helper method to create a test collection"""
-        table_name = f"c$v1${collection_name}"
-        sql = f"""CREATE TABLE IF NOT EXISTS `{table_name}` (
-            _id bigint PRIMARY KEY NOT NULL AUTO_INCREMENT,
-            document string,
-            embedding vector({dimension}),
-            metadata json,
-            FULLTEXT INDEX idx1(document),
-            VECTOR INDEX idx2 (embedding) with(distance=l2, type=hnsw, lib=vsag)
-        );"""
-        client._server.execute(sql)
-        return seekdbclient.Collection(client=client._server, name=collection_name, dimension=dimension)
-    
     def _insert_test_data(self, client, collection_name: str):
         """Helper method to insert test data and return inserted IDs"""
         table_name = f"c$v1${collection_name}"
@@ -61,51 +48,50 @@ class TestCollectionGet:
         # Insert test data with vectors, documents, and metadata
         test_data = [
             {
+                "_id": str(uuid.uuid4()),
                 "document": "This is a test document about machine learning",
                 "embedding": [1.0, 2.0, 3.0],
                 "metadata": {"category": "AI", "score": 95, "tag": "ml"}
             },
             {
+                "_id": str(uuid.uuid4()),
                 "document": "Python programming tutorial for beginners",
                 "embedding": [2.0, 3.0, 4.0],
                 "metadata": {"category": "Programming", "score": 88, "tag": "python"}
             },
             {
+                "_id": str(uuid.uuid4()),
                 "document": "Advanced machine learning algorithms",
                 "embedding": [1.1, 2.1, 3.1],
                 "metadata": {"category": "AI", "score": 92, "tag": "ml"}
             },
             {
+                "_id": str(uuid.uuid4()),
                 "document": "Data science with Python",
                 "embedding": [2.1, 3.1, 4.1],
                 "metadata": {"category": "Data Science", "score": 90, "tag": "python"}
             },
             {
+                "_id": str(uuid.uuid4()),
                 "document": "Introduction to neural networks",
                 "embedding": [1.2, 2.2, 3.2],
                 "metadata": {"category": "AI", "score": 85, "tag": "neural"}
             }
         ]
         
-        # Get the maximum ID before inserting (to identify newly inserted records)
-        max_id_before = None
-        try:
-            result = client._server.execute(f"SELECT MAX(_id) as max_id FROM `{table_name}`")
-            if result and len(result) > 0:
-                # Handle both dict and tuple return formats
-                row = result[0]
-                if isinstance(row, dict):
-                    max_id_value = row.get('max_id')
-                else:
-                    # Tuple format - assume first column is max_id
-                    max_id_value = row[0] if len(row) > 0 else None
-                if max_id_value is not None:
-                    max_id_before = int(max_id_value)
-        except Exception:
-            pass
+        # Store inserted IDs for return (using generated UUIDs)
+        inserted_ids = []
         
-        # Insert all data
+        # Insert all data with generated UUIDs
         for data in test_data:
+            # Generate UUID for _id (convert to hex string for varbinary)
+            uuid_str = data["_id"]
+            record_id = uuid_str.replace("-", "")  # Remove dashes to get hex string
+            # Validate hex string (should be 32 chars, all hex)
+            if len(record_id) != 32 or not all(c in '0123456789abcdefABCDEF' for c in record_id):
+                raise ValueError(f"Invalid UUID format after conversion: {uuid_str} -> {record_id}")
+            inserted_ids.append(uuid_str)  # Store original UUID string for return
+            
             # Convert vector to string format: [1.0,2.0,3.0]
             vector_str = "[" + ",".join(map(str, data["embedding"])) + "]"
             # Convert metadata to JSON string
@@ -113,56 +99,11 @@ class TestCollectionGet:
             # Escape single quotes in document
             document_str = data["document"].replace("'", "\\'")
             
-            sql = f"""INSERT INTO `{table_name}` (document, embedding, metadata) 
-                     VALUES ('{document_str}', '{vector_str}', '{metadata_str}')"""
+            sql = f"""INSERT INTO `{table_name}` (_id, document, embedding, metadata) 
+                     VALUES (UNHEX('{record_id}'), '{document_str}', '{vector_str}', '{metadata_str}')"""
             client._server.execute(sql)
         
-        # Get all inserted IDs by querying records with ID > max_id_before
-        inserted_ids = []
-        try:
-            if max_id_before is not None and max_id_before > 0:
-                sql = f"SELECT _id FROM `{table_name}` WHERE _id > {max_id_before} ORDER BY _id ASC"
-            else:
-                # If table was empty, get all records (should be safe since we just created the table)
-                sql = f"SELECT _id FROM `{table_name}` ORDER BY _id ASC"
-            
-            result = client._server.execute(sql)
-            if result:
-                for row in result:
-                    # Handle both dict and tuple return formats
-                    if isinstance(row, dict):
-                        id_value = row.get('_id')
-                    else:
-                        # Tuple format - assume first column is _id
-                        id_value = row[0] if len(row) > 0 else None
-                    if id_value is not None:
-                        inserted_ids.append(str(id_value))
-        except Exception as e:
-            # Fallback: try to get the last inserted ID
-            print(f"   Warning: Failed to get IDs from query, trying fallback: {e}")
-            try:
-                result = client._server.execute("SELECT LAST_INSERT_ID() as id")
-                if result and len(result) > 0:
-                    row = result[0]
-                    if isinstance(row, dict):
-                        last_id = row.get('id') or row.get('LAST_INSERT_ID()')
-                    else:
-                        last_id = row[0] if len(row) > 0 else None
-                    if last_id is not None:
-                        inserted_ids = [str(last_id)]
-            except Exception:
-                pass
-        
         return inserted_ids
-    
-    def _cleanup_collection(self, client, collection_name: str):
-        """Helper method to cleanup test collection"""
-        table_name = f"c$v1${collection_name}"
-        try:
-            client._server.execute(f"DROP TABLE IF EXISTS `{table_name}`")
-            print(f"   Cleaned up test table: {table_name}")
-        except Exception as cleanup_error:
-            print(f"   Warning: Failed to cleanup test table: {cleanup_error}")
     
     def test_embedded_collection_get(self):
         """Test collection.get() with embedded client"""
@@ -190,7 +131,7 @@ class TestCollectionGet:
         
         # Create test collection
         collection_name = f"test_get_{int(time.time())}"
-        collection = self._create_test_collection(client, collection_name, dimension=3)
+        collection = client.create_collection(name=collection_name, dimension=3)
         
         try:
             # Insert test data and get IDs
@@ -255,7 +196,11 @@ class TestCollectionGet:
             
         finally:
             # Cleanup
-            self._cleanup_collection(client, collection_name)
+            try:
+                client.delete_collection(name=collection_name)
+                print(f"   Cleaned up collection: {collection_name}")
+            except Exception as cleanup_error:
+                print(f"   Warning: Failed to cleanup collection: {cleanup_error}")
     
     def test_server_collection_get(self):
         """Test collection.get() with server client"""
@@ -281,7 +226,7 @@ class TestCollectionGet:
         
         # Create test collection
         collection_name = f"test_get_{int(time.time())}"
-        collection = self._create_test_collection(client, collection_name, dimension=3)
+        collection = client.create_collection(name=collection_name, dimension=3)
         
         try:
             # Insert test data and get IDs
@@ -364,7 +309,11 @@ class TestCollectionGet:
             
         finally:
             # Cleanup
-            self._cleanup_collection(client, collection_name)
+            try:
+                client.delete_collection(name=collection_name)
+                print(f"   Cleaned up collection: {collection_name}")
+            except Exception as cleanup_error:
+                print(f"   Warning: Failed to cleanup collection: {cleanup_error}")
     
     def test_oceanbase_collection_get(self):
         """Test collection.get() with OceanBase client"""
@@ -391,7 +340,7 @@ class TestCollectionGet:
         
         # Create test collection
         collection_name = f"test_get_{int(time.time())}"
-        collection = self._create_test_collection(client, collection_name, dimension=3)
+        collection = client.create_collection(name=collection_name, dimension=3)
         
         try:
             # Insert test data and get IDs
@@ -487,7 +436,12 @@ class TestCollectionGet:
             
         finally:
             # Cleanup
-            self._cleanup_collection(client, collection_name)
+            try:
+                client.delete_collection(name=collection_name)
+                print(f"   Cleaned up collection: {collection_name}")
+            except Exception as cleanup_error:
+                print(f"   Warning: Failed to cleanup collection: {cleanup_error}")
+            pass
 
 
 if __name__ == "__main__":

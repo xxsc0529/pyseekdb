@@ -48,20 +48,6 @@ class BaseConnection(ABC):
         """Execute SQL statement (basic functionality)"""
         pass
 
-    @abstractmethod
-    def begin(self) -> _Transaction:
-        """Begin a transaction"""
-        pass
-
-    @abstractmethod
-    def commit(self) -> None:
-        """Commit a transaction"""
-        pass
-
-    @abstractmethod
-    def rollback(self) -> None:
-        """Rollback a transaction"""
-        pass
     
     @abstractmethod
     def get_raw_connection(self) -> Any:
