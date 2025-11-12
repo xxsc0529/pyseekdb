@@ -10,15 +10,15 @@ This example demonstrates the most common operations with embedding functions:
 
 This is a minimal example to get you started quickly with embedding functions.
 """
-import seekdbclient
-from seekdbclient import DefaultEmbeddingFunction
+import pyseekdb
+from pyseekdb import DefaultEmbeddingFunction
 
 # ==================== Step 1: Create Client Connection ====================
 # You can use embedded mode, server mode, or OceanBase mode
 # For this example, we'll use server mode (you can change to embedded or OceanBase)
 
 # Server mode (connecting to remote SeekDB server)
-client = seekdbclient.Client(
+client = pyseekdb.Client(
     host="127.0.0.1",
     port=2881,
     database="test",
@@ -27,13 +27,13 @@ client = seekdbclient.Client(
 )
 
 # Alternative: Embedded mode (local SeekDB)
-# client = seekdbclient.Client(
+# client = pyseekdb.Client(
 #     path="./seekdb",
 #     database="test"
 # )
 
 # Alternative: OceanBase mode
-# client = seekdbclient.OBClient(
+# client = pyseekdb.OBClient(
 #     host="127.0.0.1",
 #     port=11402,
 #     tenant="mysql",

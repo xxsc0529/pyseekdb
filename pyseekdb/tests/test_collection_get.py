@@ -14,7 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import seekdbclient
+import pyseekdb
 from typing import List, Union
 
 
@@ -136,23 +136,23 @@ class TestCollectionGet:
         """Test collection.get() with embedded client"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.SeekdbEmbeddedClient)
+        assert isinstance(client._server, pyseekdb.SeekdbEmbeddedClient)
         
         # Create test collection
         collection_name = f"test_get_{int(time.time())}"
-        from seekdbclient import HNSWConfiguration
+        from pyseekdb import HNSWConfiguration
         config = HNSWConfiguration(dimension=3, distance='l2')
         # Use a simple 3D embedding function to match the dimension
         embedding_function = Simple3DEmbeddingFunction()
@@ -213,7 +213,7 @@ class TestCollectionGet:
             assert isinstance(results, list), "Multiple IDs should return List[QueryResult]"
             assert len(results) == 2, f"Expected 2 QueryResult objects, got {len(results)}"
             for i, result in enumerate(results):
-                assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                 if len(result) > 0:
                     for item in result:
                         result_dict = item.to_dict() if hasattr(item, 'to_dict') else item
@@ -235,7 +235,7 @@ class TestCollectionGet:
                 assert isinstance(results, list), "Multiple IDs should return List[QueryResult]"
                 assert len(results) == 3, f"Expected 3 QueryResult objects, got {len(results)}"
                 for i, result in enumerate(results):
-                    assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                    assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                     assert len(result) >= 0, f"QueryResult {i} should exist (may be empty if ID not found)"
                     print(f"   QueryResult {i} for ID {inserted_ids[i]}: {len(result)} items")
             
@@ -243,7 +243,7 @@ class TestCollectionGet:
             print(f"✅ Testing single ID returns single QueryResult (backward compatibility)")
             results = collection.get(ids=inserted_ids[0])
             assert results is not None
-            assert isinstance(results, seekdbclient.QueryResult), "Single ID should return QueryResult, not list"
+            assert isinstance(results, pyseekdb.QueryResult), "Single ID should return QueryResult, not list"
             assert len(results) == 1
             print(f"   Single QueryResult with {len(results)} item")
             
@@ -258,7 +258,7 @@ class TestCollectionGet:
     def test_server_collection_get(self):
         """Test collection.get() with server client"""
         # Create server client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -268,7 +268,7 @@ class TestCollectionGet:
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.SeekdbServerClient)
+        assert isinstance(client._server, pyseekdb.SeekdbServerClient)
         
         # Test connection
         try:
@@ -279,7 +279,7 @@ class TestCollectionGet:
         
         # Create test collection
         collection_name = f"test_get_{int(time.time())}"
-        from seekdbclient import HNSWConfiguration
+        from pyseekdb import HNSWConfiguration
         config = HNSWConfiguration(dimension=3, distance='l2')
         # Use a simple 3D embedding function to match the dimension
         embedding_function = Simple3DEmbeddingFunction()
@@ -365,7 +365,7 @@ class TestCollectionGet:
             assert isinstance(results, list), "Multiple IDs should return List[QueryResult]"
             assert len(results) == 2, f"Expected 2 QueryResult objects, got {len(results)}"
             for i, result in enumerate(results):
-                assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                 if len(result) > 0:
                     for item in result:
                         result_dict = item.to_dict() if hasattr(item, 'to_dict') else item
@@ -380,7 +380,7 @@ class TestCollectionGet:
                 assert isinstance(results, list), "Multiple IDs should return List[QueryResult]"
                 assert len(results) == 3, f"Expected 3 QueryResult objects, got {len(results)}"
                 for i, result in enumerate(results):
-                    assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                    assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                     assert len(result) >= 0, f"QueryResult {i} should exist (may be empty if ID not found)"
                     print(f"   QueryResult {i} for ID {inserted_ids[i]}: {len(result)} items")
             
@@ -388,7 +388,7 @@ class TestCollectionGet:
             print(f"✅ Testing single ID returns single QueryResult (backward compatibility)")
             results = collection.get(ids=inserted_ids[0])
             assert results is not None
-            assert isinstance(results, seekdbclient.QueryResult), "Single ID should return QueryResult, not list"
+            assert isinstance(results, pyseekdb.QueryResult), "Single ID should return QueryResult, not list"
             assert len(results) == 1
             print(f"   Single QueryResult with {len(results)} item")
             
@@ -399,7 +399,7 @@ class TestCollectionGet:
                 limit=10
             )
             assert results is not None
-            assert isinstance(results, seekdbclient.QueryResult), "Get with filters should return QueryResult, not list"
+            assert isinstance(results, pyseekdb.QueryResult), "Get with filters should return QueryResult, not list"
             print(f"   Single QueryResult with {len(results)} items matching filter")
             
         finally:
@@ -413,7 +413,7 @@ class TestCollectionGet:
     def test_oceanbase_collection_get(self):
         """Test collection.get() with OceanBase client"""
         # Create OceanBase client
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,
@@ -424,7 +424,7 @@ class TestCollectionGet:
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.OceanBaseServerClient)
+        assert isinstance(client._server, pyseekdb.OceanBaseServerClient)
         
         # Test connection
         try:
@@ -435,7 +435,7 @@ class TestCollectionGet:
         
         # Create test collection
         collection_name = f"test_get_{int(time.time())}"
-        from seekdbclient import HNSWConfiguration
+        from pyseekdb import HNSWConfiguration
         config = HNSWConfiguration(dimension=3, distance='l2')
         # Use a simple 3D embedding function to match the dimension
         embedding_function = Simple3DEmbeddingFunction()
@@ -534,7 +534,7 @@ class TestCollectionGet:
             assert isinstance(results, list), "Multiple IDs should return List[QueryResult]"
             assert len(results) == 2, f"Expected 2 QueryResult objects, got {len(results)}"
             for i, result in enumerate(results):
-                assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                 if len(result) > 0:
                     for item in result:
                         result_dict = item.to_dict() if hasattr(item, 'to_dict') else item
@@ -549,7 +549,7 @@ class TestCollectionGet:
                 assert isinstance(results, list), "Multiple IDs should return List[QueryResult]"
                 assert len(results) == 3, f"Expected 3 QueryResult objects, got {len(results)}"
                 for i, result in enumerate(results):
-                    assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                    assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                     assert len(result) >= 0, f"QueryResult {i} should exist (may be empty if ID not found)"
                     print(f"   QueryResult {i} for ID {inserted_ids[i]}: {len(result)} items")
             
@@ -557,7 +557,7 @@ class TestCollectionGet:
             print(f"✅ Testing single ID returns single QueryResult (backward compatibility)")
             results = collection.get(ids=inserted_ids[0])
             assert results is not None
-            assert isinstance(results, seekdbclient.QueryResult), "Single ID should return QueryResult, not list"
+            assert isinstance(results, pyseekdb.QueryResult), "Single ID should return QueryResult, not list"
             assert len(results) == 1
             print(f"   Single QueryResult with {len(results)} item")
             
@@ -568,7 +568,7 @@ class TestCollectionGet:
                 limit=10
             )
             assert results is not None
-            assert isinstance(results, seekdbclient.QueryResult), "Get with filters should return QueryResult, not list"
+            assert isinstance(results, pyseekdb.QueryResult), "Get with filters should return QueryResult, not list"
             print(f"   Single QueryResult with {len(results)} items matching filter")
             
         finally:

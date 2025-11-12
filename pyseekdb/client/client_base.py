@@ -184,7 +184,7 @@ class BaseClient(BaseConnection, AdminAPI):
             >>> collection = client.create_collection('my_collection')
             
             # Using custom embedding function (dimension will be calculated automatically)
-            >>> from seekdbclient import DefaultEmbeddingFunction
+            >>> from pyseekdb import DefaultEmbeddingFunction
             >>> ef = DefaultEmbeddingFunction(model_name='all-MiniLM-L6-v2')
             >>> config = HNSWConfiguration(dimension=384, distance='cosine')  # Must match EF dimension
             >>> collection = client.create_collection(

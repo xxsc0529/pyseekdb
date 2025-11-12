@@ -14,8 +14,8 @@ from typing import List, Union
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import seekdbclient
-from seekdbclient import DefaultEmbeddingFunction, HNSWConfiguration
+import pyseekdb
+from pyseekdb import DefaultEmbeddingFunction, HNSWConfiguration
 
 
 # ==================== Simple 3D Embedding Function for Testing ====================
@@ -400,7 +400,7 @@ class TestCollectionEmbeddingFunction:
             )
         
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
@@ -410,7 +410,7 @@ class TestCollectionEmbeddingFunction:
         except ImportError:
             pytest.skip("sentence-transformers is not installed. Install with: pip install sentence-transformers")
         
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
@@ -433,7 +433,7 @@ class TestCollectionEmbeddingFunction:
     
     def test_server_client(self):
         """Test with server client"""
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -472,7 +472,7 @@ class TestCollectionEmbeddingFunction:
     
     def test_oceanbase_client(self):
         """Test with OceanBase client"""
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,

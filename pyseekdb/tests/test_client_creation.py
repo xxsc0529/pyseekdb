@@ -12,7 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import seekdbclient
+import pyseekdb
 
 
 # ==================== Environment Variable Configuration ====================
@@ -54,7 +54,7 @@ class TestClientCreation:
         # Note: If embedding_function is not provided, default embedding function will be used
         # and dimension will be automatically updated to 384. We need to use the actual dimension.
         # To use a specific dimension, we need to set embedding_function=None
-        from seekdbclient import HNSWConfiguration
+        from pyseekdb import HNSWConfiguration
         config = HNSWConfiguration(dimension=test_dimension, distance='cosine')
         collection = client.create_collection(
             name=test_collection_name,
@@ -265,7 +265,7 @@ class TestClientCreation:
             project_root_str = str(project_root)
             if project_root_str in sys.path:
                 sys.path.remove(project_root_str)
-            import seekdb
+            import pylibseekdb
             if not hasattr(seekdb, 'open') and not hasattr(seekdb, '_initialize_module'):
                 pytest.fail(
                     "❌ SeekDB embedded package is not properly installed!\n"
@@ -288,7 +288,7 @@ class TestClientCreation:
                 sys.path.insert(0, project_root_str)
         
         # Create client (returns _ClientProxy)
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
@@ -297,7 +297,7 @@ class TestClientCreation:
         assert client is not None
         # Client now returns a proxy
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.SeekdbEmbeddedClient)
+        assert isinstance(client._server, pyseekdb.SeekdbEmbeddedClient)
         assert client._server.mode == "SeekdbEmbeddedClient"
         assert client._server.database == SEEKDB_DATABASE
         
@@ -323,7 +323,7 @@ class TestClientCreation:
     def test_create_server_client(self):
         """Test creating server client (lazy loading) and executing queries"""
         # Create client (returns _ClientProxy)
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -334,7 +334,7 @@ class TestClientCreation:
         # Verify client type and properties
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.SeekdbServerClient)
+        assert isinstance(client._server, pyseekdb.SeekdbServerClient)
         assert client._server.mode == "SeekdbServerClient"
         assert client._server.host == SERVER_HOST
         assert client._server.port == SERVER_PORT
@@ -369,7 +369,7 @@ class TestClientCreation:
     def test_create_oceanbase_client(self):
         """Test creating OceanBase client (lazy loading) and executing queries"""
         # Create client (returns _ClientProxy)
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,
@@ -381,7 +381,7 @@ class TestClientCreation:
         # Verify client type and properties
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.OceanBaseServerClient)
+        assert isinstance(client._server, pyseekdb.OceanBaseServerClient)
         assert client._server.mode == "OceanBaseServerClient"
         assert client._server.host == OB_HOST
         assert client._server.port == OB_PORT

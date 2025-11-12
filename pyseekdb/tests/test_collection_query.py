@@ -14,7 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import seekdbclient
+import pyseekdb
 
 
 # ==================== Environment Variable Configuration ====================
@@ -123,19 +123,19 @@ class TestCollectionQuery:
         """Test collection.query() with embedded client"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.SeekdbEmbeddedClient)
+        assert isinstance(client._server, pyseekdb.SeekdbEmbeddedClient)
         
         # Create test collection
         collection_name = f"test_query_{int(time.time())}"
@@ -207,7 +207,7 @@ class TestCollectionQuery:
             assert isinstance(results, list), "Multiple vectors should return List[QueryResult]"
             assert len(results) == 2, f"Expected 2 QueryResult objects, got {len(results)}"
             for i, result in enumerate(results):
-                assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                 assert len(result) > 0, f"QueryResult {i} should have at least one item"
                 print(f"   QueryResult {i}: {len(result)} items")
             
@@ -218,7 +218,7 @@ class TestCollectionQuery:
                 n_results=2
             )
             assert results is not None
-            assert isinstance(results, seekdbclient.QueryResult), "Single vector should return QueryResult, not list"
+            assert isinstance(results, pyseekdb.QueryResult), "Single vector should return QueryResult, not list"
             assert len(results) > 0
             print(f"   Single QueryResult with {len(results)} items")
             
@@ -233,7 +233,7 @@ class TestCollectionQuery:
     def test_server_collection_query(self):
         """Test collection.query() with server client"""
         # Create server client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -243,7 +243,7 @@ class TestCollectionQuery:
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.SeekdbServerClient)
+        assert isinstance(client._server, pyseekdb.SeekdbServerClient)
         
         # Test connection
         try:
@@ -322,7 +322,7 @@ class TestCollectionQuery:
             assert isinstance(results, list), "Multiple vectors should return List[QueryResult]"
             assert len(results) == 3, f"Expected 3 QueryResult objects, got {len(results)}"
             for i, result in enumerate(results):
-                assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                 assert len(result) > 0, f"QueryResult {i} should have at least one item"
                 print(f"   QueryResult {i}: {len(result)} items")
             
@@ -333,7 +333,7 @@ class TestCollectionQuery:
                 n_results=2
             )
             assert results is not None
-            assert isinstance(results, seekdbclient.QueryResult), "Single vector should return QueryResult, not list"
+            assert isinstance(results, pyseekdb.QueryResult), "Single vector should return QueryResult, not list"
             assert len(results) > 0
             print(f"   Single QueryResult with {len(results)} items")
             
@@ -348,7 +348,7 @@ class TestCollectionQuery:
     def test_oceanbase_collection_query(self):
         """Test collection.query() with OceanBase client"""
         # Create OceanBase client
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,
@@ -359,7 +359,7 @@ class TestCollectionQuery:
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.OceanBaseServerClient)
+        assert isinstance(client._server, pyseekdb.OceanBaseServerClient)
         
         # Test connection
         try:
@@ -405,7 +405,7 @@ class TestCollectionQuery:
             assert isinstance(results, list), "Multiple vectors should return List[QueryResult]"
             assert len(results) == 2, f"Expected 2 QueryResult objects, got {len(results)}"
             for i, result in enumerate(results):
-                assert isinstance(result, seekdbclient.QueryResult), f"Result {i} should be QueryResult"
+                assert isinstance(result, pyseekdb.QueryResult), f"Result {i} should be QueryResult"
                 assert len(result) > 0, f"QueryResult {i} should have at least one item"
                 print(f"   QueryResult {i}: {len(result)} items")
             
@@ -446,7 +446,7 @@ class TestCollectionQuery:
                 n_results=2
             )
             assert results is not None
-            assert isinstance(results, seekdbclient.QueryResult), "Single vector should return QueryResult, not list"
+            assert isinstance(results, pyseekdb.QueryResult), "Single vector should return QueryResult, not list"
             assert len(results) > 0
             print(f"   Single QueryResult with {len(results)} items")
             

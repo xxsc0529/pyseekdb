@@ -15,7 +15,7 @@ from typing import List
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import seekdbclient
+import pyseekdb
 
 
 # ==================== Environment Variable Configuration ====================
@@ -47,7 +47,7 @@ class TestCollectionHybridSearch:
         # Use client.create_collection to create the collection
         # If dimension is not provided, use default embedding function (384 dim)
         # If dimension is provided, set embedding_function=None to use the specified dimension
-        from seekdbclient import HNSWConfiguration
+        from pyseekdb import HNSWConfiguration
         if dimension is not None:
             # Use specified dimension without embedding function
             config = HNSWConfiguration(dimension=dimension, distance='l2')
@@ -190,7 +190,7 @@ class TestCollectionHybridSearch:
     def test_oceanbase_hybrid_search_full_text_only(self):
         """Test hybrid_search with only full-text search (query)"""
         # Create OceanBase client
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,
@@ -201,7 +201,7 @@ class TestCollectionHybridSearch:
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.OceanBaseServerClient)
+        assert isinstance(client._server, pyseekdb.OceanBaseServerClient)
         
         # Test connection
         try:
@@ -252,7 +252,7 @@ class TestCollectionHybridSearch:
     def test_oceanbase_hybrid_search_vector_only(self):
         """Test hybrid_search with only vector search (knn)"""
         # Create OceanBase client
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,
@@ -315,7 +315,7 @@ class TestCollectionHybridSearch:
     def test_oceanbase_hybrid_search_combined(self):
         """Test hybrid_search with both full-text and vector search"""
         # Create OceanBase client
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,
@@ -377,7 +377,7 @@ class TestCollectionHybridSearch:
     def test_oceanbase_hybrid_search_with_metadata_filter(self):
         """Test hybrid_search with metadata filters"""
         # Create OceanBase client
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,
@@ -455,7 +455,7 @@ class TestCollectionHybridSearch:
     def test_oceanbase_hybrid_search_with_logical_operators(self):
         """Test hybrid_search with logical operators in metadata filters"""
         # Create OceanBase client
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,
@@ -528,7 +528,7 @@ class TestCollectionHybridSearch:
     def test_seekdb_server_hybrid_search_full_text_only(self):
         """Test hybrid_search with only full-text search (query) using SeekdbServer"""
         # Create SeekdbServer client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -538,7 +538,7 @@ class TestCollectionHybridSearch:
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.SeekdbServerClient)
+        assert isinstance(client._server, pyseekdb.SeekdbServerClient)
         
         # Test connection
         try:
@@ -589,7 +589,7 @@ class TestCollectionHybridSearch:
     def test_seekdb_server_hybrid_search_combined(self):
         """Test hybrid_search with both full-text and vector search using SeekdbServer"""
         # Create SeekdbServer client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -650,7 +650,7 @@ class TestCollectionHybridSearch:
     def test_seekdb_server_hybrid_search_vector_only(self):
         """Test hybrid_search with only vector search (knn) using SeekdbServer"""
         # Create SeekdbServer client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -708,7 +708,7 @@ class TestCollectionHybridSearch:
     def test_seekdb_server_hybrid_search_with_metadata_filter(self):
         """Test hybrid_search with metadata filters using SeekdbServer"""
         # Create SeekdbServer client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -780,7 +780,7 @@ class TestCollectionHybridSearch:
     def test_seekdb_server_hybrid_search_with_logical_operators(self):
         """Test hybrid_search with logical operators in metadata filters using SeekdbServer"""
         # Create SeekdbServer client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -854,19 +854,19 @@ class TestCollectionHybridSearch:
         """Test hybrid_search with only full-text search (query) using SeekdbEmbedded"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
         
         assert client is not None
         assert hasattr(client, '_server')
-        assert isinstance(client._server, seekdbclient.SeekdbEmbeddedClient)
+        assert isinstance(client._server, pyseekdb.SeekdbEmbeddedClient)
         
         # Create test collection
         collection_name = f"test_hybrid_search_{int(time.time())}"
@@ -911,12 +911,12 @@ class TestCollectionHybridSearch:
         """Test hybrid_search with only vector search (knn) using SeekdbEmbedded"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
@@ -965,12 +965,12 @@ class TestCollectionHybridSearch:
         """Test hybrid_search with both full-text and vector search using SeekdbEmbedded"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
@@ -1022,12 +1022,12 @@ class TestCollectionHybridSearch:
         """Test hybrid_search with metadata filters using SeekdbEmbedded"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
@@ -1090,12 +1090,12 @@ class TestCollectionHybridSearch:
         """Test hybrid_search with logical operators in metadata filters using SeekdbEmbedded"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )

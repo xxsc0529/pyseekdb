@@ -11,14 +11,14 @@ import uuid
 from pathlib import Path
 
 # Add project path
-# Calculate project root: seekdbclient/tests/test_*.py -> pyobvector/
+# Calculate project root: pyseekdb/tests/test_*.py -> pyobvector/
 # Use resolve() to get absolute path, which works even when running as script
 project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import seekdbclient
-from seekdbclient import DefaultEmbeddingFunction
+import pyseekdb
+from pyseekdb import DefaultEmbeddingFunction
 
 
 # ==================== Environment Variable Configuration ====================
@@ -49,7 +49,7 @@ class TestDefaultEmbeddingFunction:
         """Test default embedding function with embedded client"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
@@ -60,7 +60,7 @@ class TestDefaultEmbeddingFunction:
             pytest.skip("sentence-transformers is not installed. Install with: pip install sentence-transformers")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
@@ -218,7 +218,7 @@ class TestDefaultEmbeddingFunction:
             pytest.skip("sentence-transformers is not installed. Install with: pip install sentence-transformers")
         
         # Create server client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
@@ -293,7 +293,7 @@ class TestDefaultEmbeddingFunction:
             pytest.skip("sentence-transformers is not installed. Install with: pip install sentence-transformers")
         
         # Create OceanBase client
-        client = seekdbclient.OBClient(
+        client = pyseekdb.OBClient(
             host=OB_HOST,
             port=OB_PORT,
             tenant=OB_TENANT,

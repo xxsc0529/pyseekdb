@@ -18,14 +18,14 @@ from pathlib import Path
 from typing import List, Union
 
 # Add project path
-# Calculate project root: seekdbclient/tests/test_*.py -> pyobvector/
+# Calculate project root: pyseekdb/tests/test_*.py -> pyobvector/
 # Use resolve() to get absolute path, which works even when running as script
 project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import seekdbclient
-from seekdbclient import EmbeddingFunction, HNSWConfiguration
+import pyseekdb
+from pyseekdb import EmbeddingFunction, HNSWConfiguration
 
 # Type aliases for clarity
 Documents = Union[str, List[str]]
@@ -216,12 +216,12 @@ class TestUserDefinedEmbeddingFunction:
         """Test simple hash-based embedding function with embedded client"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
@@ -315,7 +315,7 @@ class TestUserDefinedEmbeddingFunction:
         """Test sentence-transformer custom embedding function with embedded client"""
         # Check if seekdb package is available
         try:
-            import seekdb
+            import pylibseekdb
         except ImportError:
             pytest.skip("SeekDB embedded package is not installed")
         
@@ -326,7 +326,7 @@ class TestUserDefinedEmbeddingFunction:
             pytest.skip("sentence-transformers is not installed. Install with: pip install sentence-transformers")
         
         # Create embedded client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             path=SEEKDB_PATH,
             database=SEEKDB_DATABASE
         )
@@ -422,7 +422,7 @@ class TestUserDefinedEmbeddingFunction:
     def test_server_simple_hash_embedding_function(self):
         """Test simple hash-based embedding function with server client"""
         # Create server client
-        client = seekdbclient.Client(
+        client = pyseekdb.Client(
             host=SERVER_HOST,
             port=SERVER_PORT,
             database=SERVER_DATABASE,
