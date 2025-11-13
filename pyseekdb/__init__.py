@@ -38,7 +38,6 @@ Examples:
     >>> admin.create_database("new_db")
     >>> databases = admin.list_databases()
 """
-import logging
 import importlib.metadata
 
 from .client import (
@@ -85,10 +84,4 @@ __all__ = [
     'AdminClient',
     'Database',
 ]
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 

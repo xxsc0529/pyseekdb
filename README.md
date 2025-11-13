@@ -16,9 +16,6 @@ SeekDBClient is a unified Python client that wraps three database connection mod
 ## Installation
 
 ```bash
-# install pyseekdb and all dependencies
-pip install -U pyseekdb[all]
-# install pyseekdb (no default embedding support)
 pip install -U pyseekdb
 ```
 
@@ -535,7 +532,7 @@ The `query()` method performs vector similarity search to find the most similar 
 
 **Behavior with Embedding Function:**
 
-1. **If `query_embeddings` are provided:** Vectors are used directly, `embedding_function` is NOT called
+1. **If `query_embeddings` are provided:** embeddings are used directly, `embedding_function` is NOT called
 2. **If `query_embeddings` are NOT provided but `query_texts` are provided:**
    - If collection has an `embedding_function`, it will automatically generate query embeddings from texts
    - If collection does NOT have an `embedding_function`, a `ValueError` will be raised
@@ -762,7 +759,7 @@ The `hybrid_search()` method combines full-text search and vector similarity sea
 **Behavior with Embedding Function:**
 
 In the `knn` parameter:
-1. **If `query_embeddings` are provided:** Vectors are used directly, `embedding_function` is NOT called
+1. **If `query_embeddings` are provided:** embeddings are used directly, `embedding_function` is NOT called
 2. **If `query_embeddings` are NOT provided but `query_texts` are provided:**
    - If collection has an `embedding_function`, it will automatically generate query embeddings from texts
    - If collection does NOT have an `embedding_function`, a `ValueError` will be raised
@@ -1027,7 +1024,7 @@ class SimpleHashEmbeddingFunction(EmbeddingFunction[Documents]):
     """
     A simple custom embedding function that uses hash-based vectorization.
     
-    This creates fixed-dimensional vectors by hashing the text.
+    This creates fixed-dimensional embeddings by hashing the text.
     """
     
     def __init__(self, dimension: int = 128):
@@ -1035,7 +1032,7 @@ class SimpleHashEmbeddingFunction(EmbeddingFunction[Documents]):
         Initialize the hash-based embedding function.
         
         Args:
-            dimension: The dimension of the embedding vectors (default: 128)
+            dimension: The dimension of the embedding embeddings (default: 128)
         """
         self._dimension = dimension
     
@@ -1052,7 +1049,7 @@ class SimpleHashEmbeddingFunction(EmbeddingFunction[Documents]):
             input: Single document (str) or list of documents (List[str])
             
         Returns:
-            List of embedding vectors (List[List[float]])
+            List of embedding embeddings (List[List[float]])
         """
         # Handle single string input
         if isinstance(input, str):
@@ -1147,7 +1144,7 @@ class SentenceTransformerCustomEmbeddingFunction(EmbeddingFunction[Documents]):
             input: Single document (str) or list of documents (List[str])
             
         Returns:
-            List of embedding vectors
+            List of embedding embeddings
         """
         self._ensure_model_loaded()
         
@@ -1226,7 +1223,7 @@ class OpenAIEmbeddingFunction(EmbeddingFunction[Documents]):
             input: Single document (str) or list of documents (List[str])
             
         Returns:
-            List of embedding vectors
+            List of embedding embeddings
         """
         # Handle single string input
         if isinstance(input, str):
@@ -1265,17 +1262,17 @@ When creating a custom embedding function, ensure:
 
 1. **Implement `__call__` method:**
    - Accepts: `str` or `List[str]` (single document or list of documents)
-   - Returns: `List[List[float]]` (list of embedding vectors)
+   - Returns: `List[List[float]]` (list of embeddings)
    - Each vector must have the same dimension
 
 2. **Implement `dimension` property (recommended):**
-   - Returns: `int` (the dimension of vectors produced by this function)
+   - Returns: `int` (the dimension of embeddings produced by this function)
    - This helps validate dimension consistency when creating collections
 
 3. **Handle edge cases:**
    - Single string input should be converted to list
    - Empty input should return empty list
-   - All vectors in the output must have the same dimension
+   - All embeddings in the output must have the same dimension
 
 ### 6.4 Using Custom Embedding Functions
 
