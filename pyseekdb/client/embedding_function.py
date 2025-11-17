@@ -209,7 +209,7 @@ class DefaultEmbeddingFunction:
                         # If HEAD request fails, continue with GET request
                         pass
                     
-                    self._download(url, local_path, chunk_size=8192, verify_hash=False)
+                    self._download(url, local_path, chunk_size=8192)
                     logger.info(f"Successfully downloaded {local_filename}")
                 except httpx.HTTPStatusError as e:
                     if e.response.status_code == 404:
