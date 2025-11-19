@@ -27,7 +27,7 @@ SEEKDB_PATH = os.environ.get("SEEKDB_PATH", os.path.join(project_root, "seekdb_s
 SEEKDB_DATABASE = os.environ.get("SEEKDB_DATABASE", "test")
 
 # Server mode
-SERVER_HOST = os.environ.get("SERVER_HOST", "11.161.205.15")
+SERVER_HOST = os.environ.get("SERVER_HOST", "127.0.0.1")
 SERVER_PORT = int(os.environ.get("SERVER_PORT", "2881"))
 SERVER_DATABASE = os.environ.get("SERVER_DATABASE", "test")
 SERVER_USER = os.environ.get("SERVER_USER", "root")
@@ -116,7 +116,7 @@ class TestOfficialExample:
         try:
             import pylibseekdb  # noqa: F401
         except ImportError:
-            pytest.skip("SeekDB embedded package is not installed")
+            pytest.fail("SeekDB embedded package is not installed")
 
         client = pyseekdb.Client(path=SEEKDB_PATH, database=SEEKDB_DATABASE)
         collection_name, collection = self._create_collection(client)
@@ -141,7 +141,7 @@ class TestOfficialExample:
             result = client._server.execute("SELECT 1 as test")
             assert result and result[0].get("test", 1) == 1
         except Exception as exc:
-            pytest.skip(f"SeekDB server connection failed ({SERVER_HOST}:{SERVER_PORT}): {exc}")
+            pytest.fail(f"SeekDB server connection failed ({SERVER_HOST}:{SERVER_PORT}): {exc}")
 
         collection_name, collection = self._create_collection(client)
 
@@ -165,7 +165,7 @@ class TestOfficialExample:
             result = client._server.execute("SELECT 1 as test")
             assert result and result[0].get("test", 1) == 1
         except Exception as exc:
-            pytest.skip(f"OceanBase connection failed ({OB_HOST}:{OB_PORT}): {exc}")
+            pytest.fail(f"OceanBase connection failed ({OB_HOST}:{OB_PORT}): {exc}")
 
         collection_name, collection = self._create_collection(client)
 

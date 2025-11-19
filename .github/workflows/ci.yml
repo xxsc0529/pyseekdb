@@ -11,6 +11,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # server: seekdb-server
+        test_mode: [embedded, server, oceanbase]
 
     steps:
       - name: Free disk space
@@ -29,7 +33,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install Poetry
         run: |
@@ -40,16 +44,26 @@ jobs:
           poetry install
 
       - name: Start OceanBase container
+        if: matrix.test_mode == 'oceanbase'
         uses: oceanbase/setup-oceanbase-ce@v1
         with:
           image_name: 'oceanbase/oceanbase-ce'
           image_tag: '4.4.1.0-100000032025101610'
           mode: 'mini'
+          sql_port: 10000
           datafile_size: '20G'
           log_disk_size: '10G'
           tenant_name: 'mysql'
           init_sql: "ALTER SYSTEM ob_vector_memory_limit_percentage = 30; create user 'jtuser'@'%'; GRANT SELECT, INSERT, UPDATE, DELETE ON test.* TO 'jtuser'@'%'; FLUSH PRIVILEGES;"
 
+      - name: Start seekdb container
+        if: matrix.test_mode == 'server'
+        shell: bash
+        run: |
+          docker run --name seekdb-server -p 2881:2881 -d oceanbase/seekdb:latest
+          sleep 15 
+          docker logs seekdb-server
+
       - name: Run tests
         run: |
-          OB_PORT=2881 poetry run pytest --log-cli-level=INFO -k "test_oceanbase_"
+          SEEKDB_PATH=$HOME/seekdb.db OB_PORT=10000 SERVER_PORT=2881 poetry run pytest --log-cli-level=INFO -k 'test_${{ matrix.test_mode }}'

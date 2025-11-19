@@ -72,7 +72,7 @@ SEEKDB_PATH = os.environ.get('SEEKDB_PATH', os.path.join(project_root, "seekdb_s
 SEEKDB_DATABASE = os.environ.get('SEEKDB_DATABASE', 'test')
 
 # Server mode
-SERVER_HOST = os.environ.get('SERVER_HOST', '11.161.205.15')
+SERVER_HOST = os.environ.get('SERVER_HOST', '127.0.0.1')
 SERVER_PORT = int(os.environ.get('SERVER_PORT', '2881'))
 SERVER_DATABASE = os.environ.get('SERVER_DATABASE', 'test')
 SERVER_USER = os.environ.get('SERVER_USER', 'root')
@@ -393,16 +393,10 @@ class TestCollectionEmbeddingFunction:
     
     def test_embedded_client(self):
         """Test with embedded client"""
-        if not os.path.exists(SEEKDB_PATH):
-            pytest.skip(
-                f"SeekDB data directory does not exist: {SEEKDB_PATH}\n"
-                f"Set SEEKDB_PATH environment variable to run this test"
-            )
-        
         try:
             import pylibseekdb
         except ImportError:
-            pytest.skip("SeekDB embedded package is not installed")
+            pytest.fail("SeekDB embedded package is not installed")
         
         
         client = pyseekdb.Client(
@@ -443,7 +437,7 @@ class TestCollectionEmbeddingFunction:
             result = client._server.execute("SELECT 1 as test")
             assert result is not None
         except Exception as e:
-            pytest.skip(f"Server connection failed ({SERVER_HOST}:{SERVER_PORT}): {e}")
+            pytest.fail(f"Server connection failed ({SERVER_HOST}:{SERVER_PORT}): {e}")
         
         # Run all test methods
         self._test_create_collection_default_embedding_function(client)
@@ -477,7 +471,7 @@ class TestCollectionEmbeddingFunction:
             result = client._server.execute("SELECT 1 as test")
             assert result is not None
         except Exception as e:
-            pytest.skip(f"OceanBase connection failed ({OB_HOST}:{OB_PORT}): {e}")
+            pytest.fail(f"OceanBase connection failed ({OB_HOST}:{OB_PORT}): {e}")
         
         # Run all test methods
         self._test_create_collection_default_embedding_function(client)

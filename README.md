@@ -93,7 +93,7 @@ client = pyseekdb.Client(
 )
 ```
 
-### 1.4 Client Methods and Properties
+### 1.3 Client Methods and Properties
 
 | Method / Property     | Description                                                    |
 |-----------------------|----------------------------------------------------------------|
@@ -1249,6 +1249,9 @@ python3 -m pytest pyseekdb/tests/ -v
 
 # Run tests with log output
 python3 -m pytest pyseekdb/tests/ -v -s
+
+# Run all seekdb-embeded, seekdb-server, oceanbase cases
+python3 -m pytest pyseekdb/tests/ -k test_{embedded, server, oceanbase}
 
 # Run specific test
 python3 -m pytest pyseekdb/tests/test_client_creation.py::TestClientCreation::test_create_server_client -v
